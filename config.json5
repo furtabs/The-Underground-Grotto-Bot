@@ -1,0 +1,8 @@
+{
+  "owner_id": 0, // Bot owner
+  "birthday_channel_id": 0, // Where to announce birthdays
+  "birthday_role_id": 0, // Role to give to users on their birthday
+  "timezone": "America/New_York", // Timezone for the bot to use
+  "xp_per_message": 10, // XP per message
+  "bot_token": "0", // Bot token
+}
