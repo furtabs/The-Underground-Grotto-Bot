@@ -1,5 +1,5 @@
 requests
-py-cord
+py-cord==2.7.0rc2
 dadjokes
 box
 aiohttp
@@ -9,3 +9,4 @@ json5
 audioop-lts; python_version>='3.13'
 yt-dlp
 imageio-ffmpeg
+PyNaCl
