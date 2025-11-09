@@ -14,6 +14,7 @@ import urllib
 import asyncio
 from discord.ext import commands
 from discord import SlashCommandGroup
+from discord.ui import Modal, TextInput
 from util.wheel import generate_wheel_gif
 
 class MarioParty(commands.Cog):
@@ -30,7 +31,6 @@ class MarioParty(commands.Cog):
         self.eliminated_games = {}
 
     board = SlashCommandGroup("board", "MP Board related commands")
-    partyplanner = SlashCommandGroup("partyplanner", "Party Planner related commands")
 
     async def spin_wheel_and_show_result(self, ctx, options, title, description, image_path=None, filename=None):
         """Generic function to spin wheel and show result with embed."""
@@ -169,19 +169,20 @@ class MarioParty(commands.Cog):
     # Game mode commands
     @commands.slash_command(name="picknormalgamemode", description="Random normal game mode")
     async def picknormalgamemode(self, ctx):
-        modes = ["Mario Party: Magic Conch", "Mario Party: Simon Says", "Mario Party: Raiders Wrath", "Mario Party: Inversal Reversal"]
+        modes = ["Mario Party: Magic Conch", "Mario Party: Simon Says", "Mario Party: Raiders Wrath", "Mario Party: Inversal Reversal", "Mario Party Mayhem: Hot Potato Havoc"]
         await self.spin_wheel_and_show_result(ctx, modes, "🎯 Normal Game Mode Selected!", "normal game mode")
 
     @commands.slash_command(name="pickmayhemgamemode", description="Random mayhem game mode")
     async def pickmayhemgamemode(self, ctx):
         modes = [
             "Mario Party Mayhem: Classic", "Mario Party Mayhem: Modern", "Mario Party Mayhem: Magic Conch",
-            "Mario Party Mayhem: Mayhem Says", "Mario Party Mayhem: Raiders Wrath", "Mario Party Mayhem: Inversal Reversal"
+            "Mario Party Mayhem: Mayhem Says", "Mario Party Mayhem: Raiders Wrath", "Mario Party Mayhem: Inversal Reversal", 
+            "Mario Party Mayhem: Hot Potato Havoc"
         ]
         await self.spin_wheel_and_show_result(ctx, modes, "🎯 Mayhem Game Mode Selected!", "mayhem game mode")
 
-    @commands.slash_command(name="pickmp4mode", description="Random Mario Party 4 version")
-    async def pickMP4mode(self, ctx):
+    @commands.slash_command(name="pickdxmode", description="Random Mario Party 4 version")
+    async def pickDXmode(self, ctx):
         modes = ["Vanilla", "DX"]
         await self.spin_wheel_and_show_result(ctx, modes, "🎯 Mario Party 4 Version Selected!", "MP4 version")
 
@@ -217,15 +218,67 @@ class MarioParty(commands.Cog):
         await self.spin_wheel_and_show_result(ctx, options, "🎯 Duel Choice Setting Selected!", "duel choice setting")
 
 
-    @commands.slash_command(name='wheel', description="Spin a wheel with optional args")
-    async def wheel(self, ctx, args: str = None):
-        if not args:
-            await ctx.respond("Please provide options separated by commas. Example: `/wheel Mario Party 1, Mario Party 2, Mario Party 3`")
-            return
-            
-        filter_options = [option.strip() for option in args.split(',')]
+    @commands.slash_command(name='wheel', description="Spin a wheel with custom options")
+    async def wheel(self, ctx):
+        """Shows a modal to input wheel options."""
+        modal = WheelModal(self)
+        await ctx.send_modal(modal)
+
+
+class WheelModal(Modal):
+    """Modal for entering wheel options."""
+    
+    def __init__(self, cog):
+        super().__init__(title="Wheel Options")
+        self.cog = cog
+        self.options_input = TextInput(
+            label="Options (comma-separated)",
+            placeholder="Mario Party 1, Mario Party 2, Mario Party 3",
+            style=discord.TextStyle.paragraph,
+            required=True,
+            max_length=4000
+        )
+        self.add_item(self.options_input)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Handle modal submission."""
+        options_text = self.options_input.value.strip()
         
-        await self.spin_wheel_and_show_result(ctx, filter_options, f"🎉 The wheel landed on!", "custom wheel")
+        if not options_text:
+            await interaction.response.send_message("❌ Please provide at least one option!", ephemeral=True)
+            return
+        
+        # Split by comma and clean up
+        filter_options = [option.strip() for option in options_text.split(',') if option.strip()]
+        
+        if not filter_options:
+            await interaction.response.send_message("❌ Please provide at least one valid option!", ephemeral=True)
+            return
+        
+        if len(filter_options) < 2:
+            await interaction.response.send_message("❌ Please provide at least 2 options for the wheel!", ephemeral=True)
+            return
+        
+        # Defer the response since we'll be sending multiple messages
+        await interaction.response.defer()
+        
+        # Create a minimal context-like object for compatibility
+        class InteractionContext:
+            def __init__(self, inter):
+                self.interaction = inter
+                self.author = inter.user
+                self.channel = inter.channel
+                
+            async def respond(self, content=None, **kwargs):
+                """Respond using followup after defer."""
+                return await self.interaction.followup.send(content=content, **kwargs)
+            
+            async def send(self, content=None, **kwargs):
+                """Send message using followup."""
+                return await self.interaction.followup.send(content=content, **kwargs)
+        
+        ctx = InteractionContext(interaction)
+        await self.cog.spin_wheel_and_show_result(ctx, filter_options, f"🎉 The wheel landed on!", "custom wheel")
 
     async def spin_board_wheel(self, ctx, boardList, game_name):
         """Helper function to spin the wheel for any Mario Party game board with elimination."""
@@ -441,28 +494,6 @@ class MarioParty(commands.Cog):
             "Roll\'em Raceway", 'Western Land', "Mario\'s Rainbow Castle", "King Bowser\'s Keep"
         ]
         await self.spin_board_wheel(ctx, boardList, "Jamboree")
-
-    @board.command(name='reset')
-    async def reset(self, ctx, game: str = None):
-        """Reset the elimination list for a specific game or all games in this channel."""
-        channel_id = ctx.channel.id
-        
-        if channel_id not in self.eliminated_boards:
-            await ctx.respond("❌ No boards have been eliminated in this channel yet!")
-            return
-        
-        if game:
-            # Reset specific game
-            game = game.lower()
-            if game in self.eliminated_boards[channel_id]:
-                self.eliminated_boards[channel_id][game] = []
-                await ctx.respond(f"✅ Reset all eliminated boards for Mario Party {game.upper()}!")
-            else:
-                await ctx.respond(f"❌ No boards have been eliminated for Mario Party {game.upper()} yet!")
-        else:
-            # Reset all games in this channel
-            self.eliminated_boards[channel_id] = {}
-            await ctx.respond("✅ Reset all eliminated boards for all games in this channel!")
 
 def setup(bot):
     bot.add_cog(MarioParty(bot))
