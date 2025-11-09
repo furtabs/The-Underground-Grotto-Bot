@@ -7,3 +7,5 @@ Pillow
 pytz
 json5
 audioop-lts; python_version>='3.13'
+yt-dlp
+imageio-ffmpeg

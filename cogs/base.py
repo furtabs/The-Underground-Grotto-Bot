@@ -110,6 +110,7 @@ class Base(commands.Cog):
             "Leveling": {"emoji": "📊", "description": "XP and leveling system"},
             "Birthday": {"emoji": "🎂", "description": "Birthday tracking and celebrations"},
             "Quotes": {"emoji": "💬", "description": "Save and retrieve memorable quotes"},
+            "Music": {"emoji": "🎵", "description": "Music playback and queue management"},
             "SwitchFriendCodes": {"emoji": "🎮", "description": "Nintendo Switch friend code management"}
         }
         

@@ -13,6 +13,7 @@ from cogs.leveling import Leveling
 from cogs.birthday import Birthday
 from cogs.quotes import Quotes 
 from cogs.marioparty import MarioParty
+from cogs.music import Music
 
 from discord.ext import tasks
 from discord.ext import commands
@@ -54,6 +55,7 @@ bot.add_cog(Leveling(bot))
 bot.add_cog(Birthday(bot))
 bot.add_cog(Quotes(bot))
 bot.add_cog(MarioParty(bot))
+bot.add_cog(Music(bot))
 
 #Run Bot
 config = load_config()
