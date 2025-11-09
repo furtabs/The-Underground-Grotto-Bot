@@ -6,3 +6,4 @@ aiohttp
 Pillow
 pytz
 json5
+audioop-lts
