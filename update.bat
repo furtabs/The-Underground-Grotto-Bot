@@ -4,6 +4,14 @@ echo The Underground Grotto Bot - Update Dependencies
 echo ================================================================
 echo.
 
+REM Activate virtual environment
+call git pull
+if errorlevel 1 (
+    echo ERROR: Failed to pull repo
+    pause
+    exit /b 1
+)
+
 REM Check if virtual environment exists
 if not exist venv (
     echo Virtual environment not found. Please run setup.bat first.
