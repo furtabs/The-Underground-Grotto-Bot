@@ -14,8 +14,10 @@ import urllib
 import asyncio
 from discord.ext import commands
 from discord import SlashCommandGroup
-from discord.ui import Modal, TextInput
+from discord.ui import Modal
 from util.wheel import generate_wheel_gif
+
+board = SlashCommandGroup("board", "MP Board related commands")
 
 class MarioParty(commands.Cog):
 
@@ -30,7 +32,6 @@ class MarioParty(commands.Cog):
         # Format: {channel_id: {category: [eliminated_games]}}
         self.eliminated_games = {}
 
-    board = SlashCommandGroup("board", "MP Board related commands")
 
     async def spin_wheel_and_show_result(self, ctx, options, title, description, image_path=None, filename=None):
         """Generic function to spin wheel and show result with embed."""
@@ -216,69 +217,6 @@ class MarioParty(commands.Cog):
     async def stealduel(self, ctx):
         options = ["Choose", "Random"]
         await self.spin_wheel_and_show_result(ctx, options, "🎯 Duel Choice Setting Selected!", "duel choice setting")
-
-
-    @commands.slash_command(name='wheel', description="Spin a wheel with custom options")
-    async def wheel(self, ctx):
-        """Shows a modal to input wheel options."""
-        modal = WheelModal(self)
-        await ctx.send_modal(modal)
-
-
-class WheelModal(Modal):
-    """Modal for entering wheel options."""
-    
-    def __init__(self, cog):
-        super().__init__(title="Wheel Options")
-        self.cog = cog
-        self.options_input = TextInput(
-            label="Options (comma-separated)",
-            placeholder="Mario Party 1, Mario Party 2, Mario Party 3",
-            style=discord.TextStyle.paragraph,
-            required=True,
-            max_length=4000
-        )
-        self.add_item(self.options_input)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        """Handle modal submission."""
-        options_text = self.options_input.value.strip()
-        
-        if not options_text:
-            await interaction.response.send_message("❌ Please provide at least one option!", ephemeral=True)
-            return
-        
-        # Split by comma and clean up
-        filter_options = [option.strip() for option in options_text.split(',') if option.strip()]
-        
-        if not filter_options:
-            await interaction.response.send_message("❌ Please provide at least one valid option!", ephemeral=True)
-            return
-        
-        if len(filter_options) < 2:
-            await interaction.response.send_message("❌ Please provide at least 2 options for the wheel!", ephemeral=True)
-            return
-        
-        # Defer the response since we'll be sending multiple messages
-        await interaction.response.defer()
-        
-        # Create a minimal context-like object for compatibility
-        class InteractionContext:
-            def __init__(self, inter):
-                self.interaction = inter
-                self.author = inter.user
-                self.channel = inter.channel
-                
-            async def respond(self, content=None, **kwargs):
-                """Respond using followup after defer."""
-                return await self.interaction.followup.send(content=content, **kwargs)
-            
-            async def send(self, content=None, **kwargs):
-                """Send message using followup."""
-                return await self.interaction.followup.send(content=content, **kwargs)
-        
-        ctx = InteractionContext(interaction)
-        await self.cog.spin_wheel_and_show_result(ctx, filter_options, f"🎉 The wheel landed on!", "custom wheel")
 
     async def spin_board_wheel(self, ctx, boardList, game_name):
         """Helper function to spin the wheel for any Mario Party game board with elimination."""
@@ -494,6 +432,68 @@ class WheelModal(Modal):
             "Roll\'em Raceway", 'Western Land', "Mario\'s Rainbow Castle", "King Bowser\'s Keep"
         ]
         await self.spin_board_wheel(ctx, boardList, "Jamboree")
+
+    @commands.slash_command(name='wheel', description="Spin a wheel with custom options")
+    async def wheel(self, ctx):
+        """Shows a modal to input wheel options."""
+        modal = WheelModal(self)
+        await ctx.send_modal(modal)
+
+
+class WheelModal(Modal):
+    """Modal for entering wheel options."""
+    
+    def __init__(self, cog):
+        super().__init__(title="Wheel Options")
+        self.cog = cog
+        self.options_input = discord.ui.TextInput(
+            label="Options (comma-separated)",
+            placeholder="1, 2, 3",
+            style=discord.TextStyle.paragraph,
+            required=True,
+            max_length=4000
+        )
+        self.add_item(self.options_input)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Handle modal submission."""
+        options_text = self.options_input.value.strip()
+        
+        if not options_text:
+            await interaction.response.send_message("❌ Please provide at least one option!", ephemeral=True)
+            return
+        
+        # Split by comma and clean up
+        filter_options = [option.strip() for option in options_text.split(',') if option.strip()]
+        
+        if not filter_options:
+            await interaction.response.send_message("❌ Please provide at least one valid option!", ephemeral=True)
+            return
+        
+        if len(filter_options) < 2:
+            await interaction.response.send_message("❌ Please provide at least 2 options for the wheel!", ephemeral=True)
+            return
+        
+        # Defer the response since we'll be sending multiple messages
+        await interaction.response.defer()
+        
+        # Create a minimal context-like object for compatibility
+        class InteractionContext:
+            def __init__(self, inter):
+                self.interaction = inter
+                self.author = inter.user
+                self.channel = inter.channel
+                
+            async def respond(self, content=None, **kwargs):
+                """Respond using followup after defer."""
+                return await self.interaction.followup.send(content=content, **kwargs)
+            
+            async def send(self, content=None, **kwargs):
+                """Send message using followup."""
+                return await self.interaction.followup.send(content=content, **kwargs)
+        
+        ctx = InteractionContext(interaction)
+        await self.cog.spin_wheel_and_show_result(ctx, filter_options, f"🎉 The wheel landed on!", "custom wheel")
 
 def setup(bot):
     bot.add_cog(MarioParty(bot))
