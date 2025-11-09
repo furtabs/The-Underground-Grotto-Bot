@@ -294,20 +294,35 @@ class MarioParty(commands.Cog):
         # Final winner announcement
         winner = remaining_boards[0]
         
-        # Generate final wheel with just the winner
-        _, _, final_img_io = generate_wheel_gif([winner])
+        # Try to load the board image
+        board_image_path = f"boards/{game_name}/{winner}.png"
+        board_file = None
         
-        final_image_file = discord.File(final_img_io, "final_wheel.png")
-        
-        winner_embed = discord.Embed(
-            title=f"🏆 WINNER: {winner}!",
-            description=f"**The last board standing!**\nThis is your board for today!",
-            colour=0x98FB98
-        )
-        winner_embed.set_image(url="attachment://final_wheel.png")
-        winner_embed.set_footer(text=f"Ran by: {ctx.author} • Yours truly, The Underground Grotto Bot")
-        
-        await ctx.send(embed=winner_embed, file=final_image_file)
+        try:
+            board_file = discord.File(board_image_path, filename="board.png")
+            winner_embed = discord.Embed(
+                title=f"🏆 WINNER: {winner}!",
+                description=f"**The last board standing!**\nThis is your board for today!",
+                colour=0x98FB98
+            )
+            winner_embed.set_image(url="attachment://board.png")
+            winner_embed.set_footer(text=f"Ran by: {ctx.author} • Yours truly, The Underground Grotto Bot")
+            
+            await ctx.send(embed=winner_embed, file=board_file)
+        except FileNotFoundError:
+            # Fallback to wheel if board image not found
+            _, _, final_img_io = generate_wheel_gif([winner])
+            final_image_file = discord.File(final_img_io, "final_wheel.png")
+            
+            winner_embed = discord.Embed(
+                title=f"🏆 WINNER: {winner}!",
+                description=f"**The last board standing!**\nThis is your board for today!",
+                colour=0x98FB98
+            )
+            winner_embed.set_image(url="attachment://final_wheel.png")
+            winner_embed.set_footer(text=f"Ran by: {ctx.author} • Yours truly, The Underground Grotto Bot")
+            
+            await ctx.send(embed=winner_embed, file=final_image_file)
         
         # Reset for next time
         self.eliminated_boards[channel_id][game_name] = []
