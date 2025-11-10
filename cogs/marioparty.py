@@ -35,14 +35,15 @@ class MarioParty(commands.Cog):
 
     async def spin_wheel_and_show_result(self, ctx, options, title, description, image_path=None, filename=None):
         """Generic function to spin wheel and show result with embed."""
+        # Defer immediately to avoid interaction timeout
+        await ctx.defer()
+        
         # Use the wheel system - get both GIF and final image
         selected, gif_io, _ = generate_wheel_gif(options)
-        
-        await ctx.respond(f"Spinning for {description.lower()}...", delete_after=0)
 
-        # Send the GIF
+        # Send the GIF as a follow-up
         gif_file = discord.File(gif_io, "spinning_wheel.gif")
-        message = await ctx.send(file=gif_file)
+        message = await ctx.followup.send(file=gif_file)
 
         # Wait for suspense
         await asyncio.sleep(5)
@@ -63,8 +64,8 @@ class MarioParty(commands.Cog):
         result_embed.set_image(url="attachment://final_wheel.png")
         result_embed.set_footer(text=f"Ran by: {ctx.author} • Yours truly, The Underground Grotto Bot")
         
-        # Send everything in one message
-        await ctx.send(embed=result_embed, file=final_image_file)
+        # Send everything in one message as follow-up
+        await ctx.followup.send(embed=result_embed, file=final_image_file)
 
     async def spin_game_wheel(self, ctx, gameList, category_name):
         """Helper function to spin the wheel for game selection with elimination."""
@@ -175,17 +176,13 @@ class MarioParty(commands.Cog):
 
     @commands.slash_command(name="pickmayhemgamemode", description="Random mayhem game mode")
     async def pickmayhemgamemode(self, ctx):
-        modes = [
-            "Mario Party Mayhem: Classic", "Mario Party Mayhem: Modern", "Mario Party Mayhem: Magic Conch",
-            "Mario Party Mayhem: Mayhem Says", "Mario Party Mayhem: Raiders Wrath", "Mario Party Mayhem: Inversal Reversal", 
-            "Mario Party Mayhem: Hot Potato Havoc"
-        ]
+        modes = ["Mario Party Mayhem: Classic", "Mario Party Mayhem: Modern", "Mario Party Mayhem: Magic Conch", "Mario Party Mayhem: Mayhem Says", "Mario Party Mayhem: Raiders Wrath", "Mario Party Mayhem: Inversal Reversal", "Mario Party Mayhem: Hot Potato Havoc"]
         await self.spin_wheel_and_show_result(ctx, modes, "🎯 Mayhem Game Mode Selected!", "mayhem game mode")
 
-    @commands.slash_command(name="pickdxmode", description="Random Mario Party 4 version")
+    @commands.slash_command(name="pickdxmode", description="Random Mario Party version")
     async def pickDXmode(self, ctx):
         modes = ["Vanilla", "DX"]
-        await self.spin_wheel_and_show_result(ctx, modes, "🎯 Mario Party 4 Version Selected!", "MP4 version")
+        await self.spin_wheel_and_show_result(ctx, modes, "🎯 Mario Party Version Selected!", "DX or vanilla version")
 
     @commands.slash_command(name="pickmpmode", description="Random Mario Party mode")
     async def pickMPmode(self, ctx):
