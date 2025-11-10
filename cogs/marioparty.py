@@ -17,8 +17,6 @@ from discord import SlashCommandGroup
 from discord.ui import Modal
 from util.wheel import generate_wheel_gif
 
-board = SlashCommandGroup("board", "MP Board related commands")
-
 class MarioParty(commands.Cog):
 
     """Cog for Mario Party commands"""
@@ -31,6 +29,8 @@ class MarioParty(commands.Cog):
         # Store eliminated games per channel
         # Format: {channel_id: {category: [eliminated_games]}}
         self.eliminated_games = {}
+
+    board = SlashCommandGroup("board", "MP Board related commands")
 
 
     async def spin_wheel_and_show_result(self, ctx, options, title, description, image_path=None, filename=None):
@@ -449,7 +449,7 @@ class WheelModal(Modal):
         self.options_input = discord.ui.TextInput(
             label="Options (comma-separated)",
             placeholder="1, 2, 3",
-            style=discord.TextStyle.paragraph,
+            style=discord.InputTextStyle.paragraph,
             required=True,
             max_length=4000
         )
